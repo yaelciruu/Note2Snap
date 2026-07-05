@@ -61,4 +61,6 @@ dependencies {
     implementation(libs.compose.material.icons.extended)
     implementation(libs.lifecycle.runtime.compose)
     implementation(libs.lifecycle.viewmodel.compose)
+    implementation(project(":sdk"))
+
 }
