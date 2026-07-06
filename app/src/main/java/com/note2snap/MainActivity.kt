@@ -14,6 +14,7 @@ import com.note2snap.core.theme.Note2SnapTheme
 import com.note2snap.core.util.ImageStorage
 import com.note2snap.preprocessing.WhiteboardPreprocessor
 import com.note2snap.recognition.MockHandwritingRecognizer
+import com.note2snap.structuring.NoteStructuringEngine
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -31,18 +32,32 @@ class MainActivity : ComponentActivity() {
                     val preprocessed = WhiteboardPreprocessor().process(testFile)
                     val regions = ConnectedComponentLabeler().label(preprocessed.binarizedBitmap)
                     val textRegions = regions.filter { it.type == RegionType.TEXT }
+                    val nonTextRegions = regions.filter { it.type == RegionType.NON_TEXT }
 
                     val recognizedLines = MockHandwritingRecognizer().recognize(textRegions)
 
+                    val structuredNote = NoteStructuringEngine().structure(
+                        recognizedLines = recognizedLines,
+                        nonTextRegions = nonTextRegions,
+                        sourceImageWidth = preprocessed.originalWidth,
+                        sourceImageHeight = preprocessed.originalHeight
+                    )
+
                     android.util.Log.d(
                         "Note2SnapDebug",
-                        "Recognition success: ${recognizedLines.size} lines recognized"
+                        "Structuring success: ${structuredNote.blocks.size} blocks"
                     )
-                    recognizedLines.forEach { line ->
+                    structuredNote.blocks.forEach { block ->
                         android.util.Log.d(
                             "Note2SnapDebug",
-                            "Line: '${line.text}' confidence=${line.confidence} box=${line.boundingBox}"
+                            "Block ${block.index}: ${block.elements.size} elements"
                         )
+                        block.elements.forEach { element ->
+                            android.util.Log.d(
+                                "Note2SnapDebug",
+                                "  - ${element.kind} at (${element.normalizedX}, ${element.normalizedY})"
+                            )
+                        }
                     }
                 } catch (e: Exception) {
                     android.util.Log.e("Note2SnapDebug", "Pipeline failed", e)
