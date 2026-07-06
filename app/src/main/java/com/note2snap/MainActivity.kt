@@ -13,6 +13,7 @@ import com.note2snap.ccl.RegionType
 import com.note2snap.core.theme.Note2SnapTheme
 import com.note2snap.core.util.ImageStorage
 import com.note2snap.preprocessing.WhiteboardPreprocessor
+import com.note2snap.recognition.MockHandwritingRecognizer
 import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
@@ -28,23 +29,19 @@ class MainActivity : ComponentActivity() {
             lifecycleScope.launch {
                 try {
                     val preprocessed = WhiteboardPreprocessor().process(testFile)
-                    android.util.Log.d(
-                        "Note2SnapDebug",
-                        "Preprocessing success: ${preprocessed.originalWidth}x${preprocessed.originalHeight}"
-                    )
-
                     val regions = ConnectedComponentLabeler().label(preprocessed.binarizedBitmap)
-                    val textCount = regions.count { it.type == RegionType.TEXT }
-                    val diagramCount = regions.count { it.type == RegionType.NON_TEXT }
+                    val textRegions = regions.filter { it.type == RegionType.TEXT }
+
+                    val recognizedLines = MockHandwritingRecognizer().recognize(textRegions)
 
                     android.util.Log.d(
                         "Note2SnapDebug",
-                        "CCL success: ${regions.size} total regions ($textCount text, $diagramCount diagrams)"
+                        "Recognition success: ${recognizedLines.size} lines recognized"
                     )
-                    regions.forEach { region ->
+                    recognizedLines.forEach { line ->
                         android.util.Log.d(
                             "Note2SnapDebug",
-                            "Region ${region.id}: ${region.type}, box=${region.boundingBox}, area=${region.pixelArea}"
+                            "Line: '${line.text}' confidence=${line.confidence} box=${line.boundingBox}"
                         )
                     }
                 } catch (e: Exception) {
