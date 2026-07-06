@@ -1,6 +1,8 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.ksp)
+    alias(libs.plugins.room)
 }
 
 android {
@@ -67,4 +69,11 @@ dependencies {
     implementation(libs.lifecycle.viewmodel.compose)
     implementation(project(":sdk"))
     implementation(libs.tensorflow.lite)
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
     }
+
+room {
+    schemaDirectory("$projectDir/schemas")
+}
