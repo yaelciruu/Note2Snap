@@ -15,3 +15,13 @@
 local.properties
 
 /sdk/
+
+# Machine learning models
+*.tflite
+*.h5
+*.weights.h5
+
+# Training data
+raw_whiteboards/
+whiteboard_line_crops/
+iam_lines/
