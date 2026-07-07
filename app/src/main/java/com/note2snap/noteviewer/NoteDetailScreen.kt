@@ -66,7 +66,12 @@ fun NoteDetailScreen(
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp)
                 ) {
-                    NoteCanvas(structuredNote = state.structuredNote)
+                    NoteCanvas(
+                        structuredNote = state.structuredNote,
+                        onElementEdited = { elementId, newText ->
+                            viewModel.updateElementText(elementId, newText, noteId)
+                        }
+                    )
                 }
             }
         }

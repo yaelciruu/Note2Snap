@@ -8,4 +8,5 @@ interface NoteRepository {
     fun observeAllNotes(): Flow<List<NoteSummary>>
     suspend fun getStructuredNote(noteId: Long): StructuredNote?
     suspend fun deleteNote(noteId: Long)
+    suspend fun updateElementText(elementId: Long, newText: String)
 }

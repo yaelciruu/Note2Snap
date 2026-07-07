@@ -24,4 +24,7 @@ interface NoteDao {
 
     @Query("DELETE FROM notes WHERE id = :noteId")
     suspend fun deleteNote(noteId: Long)
+
+    @Query("UPDATE note_elements SET text = :newText, confidence = 1.0 WHERE id = :elementId")
+    suspend fun updateElementText(elementId: Long, newText: String)
 }

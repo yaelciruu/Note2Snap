@@ -104,6 +104,7 @@ class NoteRepositoryImpl(
             .sortedBy { it.orderIndex }
             .map { entity ->
                 StructuredElement(
+                    elementId = entity.id,
                     kind = ElementKind.valueOf(entity.kind),
                     text = entity.text,
                     confidence = entity.confidence,
@@ -131,5 +132,9 @@ class NoteRepositoryImpl(
 
     override suspend fun deleteNote(noteId: Long) {
         noteDao.deleteNote(noteId)
+    }
+
+    override suspend fun updateElementText(elementId: Long, newText: String) {
+        noteDao.updateElementText(elementId, newText)
     }
 }

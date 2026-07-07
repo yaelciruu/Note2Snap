@@ -30,4 +30,11 @@ class NoteDetailViewModel(private val repository: NoteRepository) : ViewModel() 
             }
         }
     }
+
+    fun updateElementText(elementId: Long, newText: String, noteId: Long) {
+        viewModelScope.launch {
+            repository.updateElementText(elementId, newText)
+            loadNote(noteId) // reload so the UI reflects the saved correction
+        }
+    }
 }

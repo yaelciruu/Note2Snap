@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 enum class ElementKind { TEXT, DIAGRAM }
 
 data class StructuredElement(
+    val elementId: Long = 0,
     val kind: ElementKind,
     val text: String?,
     val confidence: Float?,
