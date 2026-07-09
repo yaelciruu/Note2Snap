@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.BugReport
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Card
 import androidx.compose.material3.FloatingActionButton
@@ -25,6 +26,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.note2snap.BuildConfig
 import com.note2snap.data.repository.NoteSummary
 import java.text.DateFormat
 import java.util.Date
@@ -34,12 +36,24 @@ import java.util.Date
 fun NoteListScreen(
     viewModel: NoteListViewModel,
     onNoteClick: (Long) -> Unit,
-    onNewCaptureClick: () -> Unit
+    onNewCaptureClick: () -> Unit,
+    onDebugClick: () -> Unit
 ) {
     val notes by viewModel.notes.collectAsState()
 
     Scaffold(
-        topBar = { TopAppBar(title = { Text("Note2Snap") }) },
+        topBar = {
+            TopAppBar(
+                title = { Text("Note2Snap") },
+                actions = {
+                    if (BuildConfig.DEBUG) {
+                        IconButton(onClick = onDebugClick) {
+                            Icon(Icons.Filled.BugReport, contentDescription = "CCL threshold debug")
+                        }
+                    }
+                }
+            )
+        },
         floatingActionButton = {
             FloatingActionButton(onClick = onNewCaptureClick) {
                 Icon(Icons.Filled.Add, contentDescription = "New whiteboard capture")

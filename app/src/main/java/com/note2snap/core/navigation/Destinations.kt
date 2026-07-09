@@ -19,3 +19,6 @@ data class ProcessingDestination(val imageFilePath: String)
 
 @Serializable
 data class NoteDetailDestination(val noteId: Long)
+
+@Serializable
+data object CclDebugDestination

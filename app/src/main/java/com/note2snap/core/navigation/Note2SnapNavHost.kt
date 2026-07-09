@@ -28,6 +28,7 @@ import com.note2snap.noteviewer.NoteListViewModel
 import com.note2snap.noteviewer.ProcessingUiState
 import com.note2snap.noteviewer.ProcessingViewModel
 import com.note2snap.noteviewer.RepositoryViewModelFactory
+import com.note2snap.debug.CclDebugScreen
 
 @Composable
 fun Note2SnapNavHost(noteRepository: NoteRepository) {
@@ -45,6 +46,9 @@ fun Note2SnapNavHost(noteRepository: NoteRepository) {
                 },
                 onNewCaptureClick = {
                     navController.navigate(CaptureChoiceDestination)
+                },
+                onDebugClick = {
+                    navController.navigate(CclDebugDestination)
                 }
             )
         }
@@ -126,6 +130,10 @@ fun Note2SnapNavHost(noteRepository: NoteRepository) {
                 viewModel = viewModel,
                 onBackClick = { navController.popBackStack() }
             )
+        }
+
+        composable<CclDebugDestination> {
+            CclDebugScreen()
         }
     }
 }

@@ -37,11 +37,13 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     androidResources {
         noCompress += "tflite"
     }
+
 }
 
 dependencies {

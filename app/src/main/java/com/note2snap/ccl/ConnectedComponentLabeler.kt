@@ -12,6 +12,11 @@ import org.opencv.imgproc.Imgproc
 
 class ConnectedComponentLabeler {
 
+    companion object {
+        private const val MAX_MERGED_TEXT_AREA_RATIO = 0.08
+        // a merged "text" box bigger than 8% of the whole image is probably a diagram, not a paragraph
+    }
+
     suspend fun label(binarizedBitmap: Bitmap): List<Region> =
         withContext(Dispatchers.Default) {
             val srcMat = Mat().also { Utils.bitmapToMat(binarizedBitmap, it) }
@@ -67,7 +72,7 @@ class ConnectedComponentLabeler {
 
         val merged = mutableListOf<Rect>()
         val used = BooleanArray(textRegions.size)
-        val horizontalGapThreshold = 28
+        val horizontalGapThreshold = 22
 
         for (i in textRegions.indices) {
             if (used[i]) continue
@@ -102,6 +107,9 @@ class ConnectedComponentLabeler {
             merged += currentBox
         }
 
+        val imageArea = sourceBitmap.width * sourceBitmap.height
+        val maxMergedTextArea = imageArea * MAX_MERGED_TEXT_AREA_RATIO
+
         val mergedTextRegions = merged.mapIndexed { index, box ->
             val cropped = Bitmap.createBitmap(
                 sourceBitmap,
@@ -110,11 +118,13 @@ class ConnectedComponentLabeler {
                 box.width().coerceAtMost(sourceBitmap.width - box.left),
                 box.height().coerceAtMost(sourceBitmap.height - box.top)
             )
+            val boxArea = box.width() * box.height()
+            val finalType = if (boxArea > maxMergedTextArea) RegionType.NON_TEXT else RegionType.TEXT
             Region(
                 id = 100_000 + index,
                 boundingBox = box,
-                type = RegionType.TEXT,
-                pixelArea = box.width() * box.height(),
+                type = finalType,
+                pixelArea = boxArea,
                 croppedBitmap = cropped
             )
         }

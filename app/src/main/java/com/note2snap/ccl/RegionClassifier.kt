@@ -7,6 +7,7 @@ object RegionClassifier {
     private const val MAX_TEXT_EXTENT = 0.55
     private const val MAX_TEXT_ASPECT_RATIO = 6.0
     private const val MIN_DIAGRAM_AREA = 900
+    private const val MAX_DIAGRAM_ASPECT_RATIO = 8.0
 
     fun classify(boundingBox: Rect, strokePixelCount: Int): RegionType? {
         val bboxArea = boundingBox.width() * boundingBox.height()
@@ -19,12 +20,12 @@ object RegionClassifier {
         )
 
         val looksLikeText = extent <= MAX_TEXT_EXTENT && aspectRatio <= MAX_TEXT_ASPECT_RATIO
-        val isLargeEnoughForDiagram = bboxArea >= MIN_DIAGRAM_AREA
+        val isLargeEnoughForDiagram = bboxArea >= MIN_DIAGRAM_AREA && aspectRatio <= MAX_DIAGRAM_ASPECT_RATIO
 
         return when {
             looksLikeText -> RegionType.TEXT
             isLargeEnoughForDiagram -> RegionType.NON_TEXT
-            else -> RegionType.TEXT
+            else -> null
         }
     }
 }
