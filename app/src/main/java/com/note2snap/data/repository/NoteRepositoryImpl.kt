@@ -39,6 +39,17 @@ class NoteRepositoryImpl(
         val textRegions = regions.filter { it.type != RegionType.NON_TEXT }
         val nonTextRegions = regions.filter { it.type == RegionType.NON_TEXT }
 
+        val imageArea = preprocessed.originalWidth * preprocessed.originalHeight
+        val looksBlank = regions.isEmpty() ||
+                (regions.size == 1 && (regions[0].boundingBox.width() * regions[0].boundingBox.height()) > imageArea * 0.9)
+
+        if (looksBlank) {
+            throw EmptyWhiteboardException(
+                "No text or diagrams were detected in this photo. Try retaking it with " +
+                        "better lighting, or make sure the whiteboard has content on it."
+            )
+        }
+
         val recognizedLines = recognizer.recognize(textRegions)
 
         val structuredNote = structuringEngine.structure(
@@ -138,3 +149,5 @@ class NoteRepositoryImpl(
         noteDao.updateElementText(elementId, newText)
     }
 }
+
+class EmptyWhiteboardException(message: String) : Exception(message)

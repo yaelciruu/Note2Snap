@@ -123,6 +123,10 @@ class WhiteboardPreprocessor {
 
         val decodeOptions = BitmapFactory.Options().apply { inSampleSize = sampleSize }
         return BitmapFactory.decodeFile(file.absolutePath, decodeOptions)
-            ?: error("Unable to decode image at ${file.absolutePath}")
+            ?: throw CorruptedImageException(
+                "This image couldn't be read. It may be damaged or in an unsupported format."
+            )
     }
 }
+
+class CorruptedImageException(message: String) : Exception(message)

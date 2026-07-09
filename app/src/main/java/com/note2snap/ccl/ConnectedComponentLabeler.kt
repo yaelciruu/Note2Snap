@@ -15,6 +15,9 @@ class ConnectedComponentLabeler {
     companion object {
         private const val MAX_MERGED_TEXT_AREA_RATIO = 0.08
         // a merged "text" box bigger than 8% of the whole image is probably a diagram, not a paragraph
+        private const val MAX_REGIONS_PER_IMAGE = 300
+        // tune based on real photos; a typical whiteboard has well under 100
+
     }
 
     suspend fun label(binarizedBitmap: Bitmap): List<Region> =
@@ -129,8 +132,19 @@ class ConnectedComponentLabeler {
             )
         }
 
+        val allRegions = nonText + mergedTextRegions
+        if (allRegions.size > MAX_REGIONS_PER_IMAGE) {
+            throw TooManyRegionsException(
+                "This photo produced an unusually high number of regions (${allRegions.size}), " +
+                        "which likely means the image is too noisy to process reliably. Try " +
+                        "retaking it with better lighting or a cleaner whiteboard."
+            )
+        }
+
         return (nonText + mergedTextRegions).sortedWith(
             compareBy({ it.boundingBox.top }, { it.boundingBox.left })
         )
     }
 }
+
+class TooManyRegionsException(message: String) : Exception(message)
