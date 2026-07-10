@@ -33,7 +33,8 @@ import com.note2snap.debug.CclDebugScreen
 @Composable
 fun Note2SnapNavHost(noteRepository: NoteRepository) {
     val navController = rememberNavController()
-    val factory = RepositoryViewModelFactory(noteRepository)
+    val context = androidx.compose.ui.platform.LocalContext.current
+    val factory = RepositoryViewModelFactory(noteRepository, context.applicationContext)
 
     NavHost(navController = navController, startDestination = NoteListDestination) {
 

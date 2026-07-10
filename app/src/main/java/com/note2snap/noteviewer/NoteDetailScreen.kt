@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -20,6 +21,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
@@ -30,8 +32,25 @@ fun NoteDetailScreen(
     onBackClick: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val exportState by viewModel.exportState.collectAsState()
+    val context = LocalContext.current
 
     LaunchedEffect(noteId) { viewModel.loadNote(noteId) }
+
+    LaunchedEffect(exportState) {
+        val state = exportState
+        if (state is ExportUiState.Success) {
+            val uri = com.note2snap.export.PdfExporter(context.applicationContext)
+                .getShareableUri(state.pdfFile)
+            val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
+                type = "application/pdf"
+                putExtra(android.content.Intent.EXTRA_STREAM, uri)
+                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            context.startActivity(android.content.Intent.createChooser(shareIntent, "Share PDF"))
+            viewModel.resetExportState()
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -40,6 +59,17 @@ fun NoteDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                    }
+                },
+                actions = {
+                    if (uiState is NoteDetailUiState.Loaded) {
+                        if (exportState is ExportUiState.Exporting) {
+                            CircularProgressIndicator(modifier = Modifier.padding(8.dp))
+                        } else {
+                            IconButton(onClick = { viewModel.exportToPdf("Note_$noteId") }) {
+                                Icon(Icons.Filled.Share, contentDescription = "Export as PDF")
+                            }
+                        }
                     }
                 }
             )
@@ -66,6 +96,12 @@ fun NoteDetailScreen(
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp)
                 ) {
+                    if (exportState is ExportUiState.Failure) {
+                        Text(
+                            "Export failed: ${(exportState as ExportUiState.Failure).message}",
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+                    }
                     NoteCanvas(
                         structuredNote = state.structuredNote,
                         onElementEdited = { elementId, newText ->
