@@ -44,6 +44,12 @@ android {
         noCompress += "tflite"
     }
 
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
+        }
+    }
+
 }
 
 dependencies {
@@ -77,6 +83,7 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.navigation.compose)
     implementation(libs.kotlinx.serialization.json)
+    testImplementation("org.robolectric:robolectric:4.14")
     }
 
 room {
