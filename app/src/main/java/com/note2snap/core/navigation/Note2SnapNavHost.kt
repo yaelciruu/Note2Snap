@@ -29,6 +29,10 @@ import com.note2snap.noteviewer.ProcessingUiState
 import com.note2snap.noteviewer.ProcessingViewModel
 import com.note2snap.noteviewer.RepositoryViewModelFactory
 import com.note2snap.debug.CclDebugScreen
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 
 @Composable
 fun Note2SnapNavHost(noteRepository: NoteRepository) {
@@ -112,11 +116,22 @@ fun Note2SnapNavHost(noteRepository: NoteRepository) {
                             }
                         }
                         else -> {
+                            var elapsedSeconds by remember { mutableStateOf(0) }
+                            LaunchedEffect(Unit) {
+                                while (true) {
+                                    kotlinx.coroutines.delay(1000)
+                                    elapsedSeconds++
+                                }
+                            }
+
                             CircularProgressIndicator()
-                            Text(
-                                "Preprocessing, segmenting, and structuring your whiteboard…",
-                                modifier = Modifier.padding(top = 16.dp)
-                            )
+                            val stageMessage = when {
+                                elapsedSeconds < 2 -> "Preprocessing image…"
+                                elapsedSeconds < 4 -> "Detecting text and diagrams…"
+                                elapsedSeconds < 6 -> "Recognizing handwriting…"
+                                else -> "Structuring your note…"
+                            }
+                            Text(stageMessage, modifier = Modifier.padding(top = 16.dp))
                         }
                     }
                 }

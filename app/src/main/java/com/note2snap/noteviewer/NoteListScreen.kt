@@ -30,6 +30,9 @@ import com.note2snap.BuildConfig
 import com.note2snap.data.repository.NoteSummary
 import java.text.DateFormat
 import java.util.Date
+import androidx.compose.material.icons.filled.Camera
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.Button
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -62,9 +65,30 @@ fun NoteListScreen(
     ) { padding ->
         if (notes.isEmpty()) {
             Column(
-                modifier = Modifier.fillMaxSize().padding(padding).padding(24.dp)
+                modifier = Modifier.fillMaxSize().padding(padding).padding(32.dp),
+                verticalArrangement = Arrangement.Center,
+                horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally
             ) {
-                Text("No notes yet. Tap + to capture your first whiteboard.")
+                Icon(
+                    imageVector = Icons.Filled.Camera,
+                    contentDescription = null,
+                    modifier = Modifier.size(64.dp),
+                    tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f)
+                )
+                Text(
+                    "No notes yet",
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 16.dp)
+                )
+                Text(
+                    "Capture a whiteboard to get started",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp)
+                )
+                Button(onClick = onNewCaptureClick, modifier = Modifier.padding(top = 24.dp)) {
+                    Text("Capture your first whiteboard")
+                }
             }
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize().padding(padding)) {
