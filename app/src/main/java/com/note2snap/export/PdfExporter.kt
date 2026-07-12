@@ -1,9 +1,12 @@
 package com.note2snap.export
 
 import android.content.Context
+import android.graphics.Bitmap
 import android.graphics.Paint
 import android.graphics.pdf.PdfDocument
+import android.net.Uri
 import androidx.core.content.FileProvider
+import androidx.core.graphics.scale
 import com.note2snap.structuring.ElementKind
 import com.note2snap.structuring.StructuredNote
 import kotlinx.coroutines.Dispatchers
@@ -12,7 +15,7 @@ import java.io.File
 import java.io.FileOutputStream
 
 /**
- * Exports a StructuredNote to a PDF file, reusing the same normalized-
+ * Exports a StructuredNote to a PDF file, reusing the same normalized
  * coordinate positioning NoteCanvas uses for on-screen rendering -- text
  * and diagrams land in the same relative positions in the PDF as they do
  * in the app.
@@ -58,7 +61,7 @@ class PdfExporter(private val context: Context) {
                         element.diagramBitmap?.let { bitmap ->
                             val width = (element.normalizedWidth * contentWidth).toInt().coerceAtLeast(1)
                             val height = (element.normalizedHeight * contentHeight).toInt().coerceAtLeast(1)
-                            val scaledBitmap = android.graphics.Bitmap.createScaledBitmap(bitmap, width, height, true)
+                            val scaledBitmap = bitmap.scale(width, height)
                             canvas.drawBitmap(scaledBitmap, x, y, null)
                         }
                     }
@@ -67,15 +70,17 @@ class PdfExporter(private val context: Context) {
 
             document.finishPage(page)
 
-            val outputFile = File(context.filesDir, "exports").apply { mkdirs() }
-                .let { File(it, "${title.replace(" ", "_")}.pdf") }
+            val exportsDir = File(context.filesDir, "exports").apply { mkdirs() }
+            val outputFile = File(exportsDir, "${title.replace(" ", "_")}.pdf")
 
-            FileOutputStream(outputFile).use { output -> document.writeTo(output) }
+            withContext(Dispatchers.IO) {
+                FileOutputStream(outputFile).use { output -> document.writeTo(output) }
+            }
             document.close()
 
             outputFile
         }
 
-    fun getShareableUri(pdfFile: File) =
+    fun getShareableUri(pdfFile: File): Uri =
         FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", pdfFile)
 }
