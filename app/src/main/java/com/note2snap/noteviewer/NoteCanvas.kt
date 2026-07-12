@@ -27,6 +27,19 @@ import com.note2snap.structuring.ElementKind
 import com.note2snap.structuring.StructuredElement
 import com.note2snap.structuring.StructuredNote
 
+private const val LOW_CONFIDENCE_THRESHOLD = 0.4f
+private val MIN_TEXT_TOUCH_WIDTH = 24.dp
+private val MIN_TEXT_TOUCH_HEIGHT = 16.dp
+
+/**
+ * Renders a StructuredNote's elements at their normalized positions, scaled
+ * to the actual on-screen canvas size -- text and diagrams land in the same
+ * relative positions here as they will in a PDF export (see PdfExporter).
+ *
+ * When [onElementEdited] is provided, tapping a recognized text line opens
+ * an inline correction dialog and reports the edit back through the callback;
+ * when null, the canvas is fully read-only (e.g. for a future export preview).
+ */
 @Composable
 fun NoteCanvas(
     structuredNote: StructuredNote,
@@ -61,15 +74,19 @@ fun NoteCanvas(
                         modifier = Modifier
                             .offset(x = xDp, y = yDp)
                             .size(
-                                width = widthDp.coerceAtLeastDp(24.dp),
-                                height = heightDp.coerceAtLeastDp(16.dp)
+                                width = widthDp.coerceAtLeastDp(MIN_TEXT_TOUCH_WIDTH),
+                                height = heightDp.coerceAtLeastDp(MIN_TEXT_TOUCH_HEIGHT)
                             )
                             .let { base ->
                                 if (onElementEdited != null) {
                                     base.clickable { editingElement = element }
                                 } else base
                             },
-                        color = if ((element.confidence ?: 1f) < 0.4f) {
+                        // Recognized text below this confidence is tinted as
+                        // a visual flag for the user to double-check/correct it.
+                        // Correcting a line resets its confidence to 1.0 (see
+                        // NoteDao.updateElementText), which clears this tint.
+                        color = if ((element.confidence ?: 1f) < LOW_CONFIDENCE_THRESHOLD) {
                             MaterialTheme.colorScheme.error
                         } else {
                             MaterialTheme.colorScheme.onSurface
