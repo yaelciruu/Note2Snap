@@ -16,8 +16,10 @@ import com.note2snap.structuring.NoteBlock
 import com.note2snap.structuring.NoteStructuringEngine
 import com.note2snap.structuring.StructuredElement
 import com.note2snap.structuring.StructuredNote
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import java.io.File
 
 class NoteRepositoryImpl(
@@ -25,6 +27,13 @@ class NoteRepositoryImpl(
     private val appContext: Context,
     private val recognizer: HandwritingRecognizer = MockHandwritingRecognizer()
 ) : NoteRepository {
+
+    private companion object {
+        // A single detected region covering more than this fraction of the whole
+        // photo almost certainly means the photo was blank/uniform (e.g. a solid
+        // color), not real content -- see Part C, Step 1 of the hardening guide.
+        const val BLANK_REGION_AREA_RATIO = 0.9
+    }
 
     private val imageStorage = ImageStorage(appContext)
     private val preprocessor = WhiteboardPreprocessor()
@@ -41,7 +50,7 @@ class NoteRepositoryImpl(
 
         val imageArea = preprocessed.originalWidth * preprocessed.originalHeight
         val looksBlank = regions.isEmpty() ||
-                (regions.size == 1 && (regions[0].boundingBox.width() * regions[0].boundingBox.height()) > imageArea * 0.9)
+                (regions.size == 1 && (regions[0].boundingBox.width() * regions[0].boundingBox.height()) > imageArea * BLANK_REGION_AREA_RATIO)
 
         if (looksBlank) {
             throw EmptyWhiteboardException(
@@ -111,24 +120,27 @@ class NoteRepositoryImpl(
     override suspend fun getStructuredNote(noteId: Long): StructuredNote? {
         val noteWithElements = noteDao.getNoteWithElements(noteId) ?: return null
         val note = noteWithElements.note
-        val elements = noteWithElements.elements
-            .sortedBy { it.orderIndex }
-            .map { entity ->
-                StructuredElement(
-                    elementId = entity.id,
-                    kind = ElementKind.valueOf(entity.kind),
-                    text = entity.text,
-                    confidence = entity.confidence,
-                    diagramBitmap = entity.diagramImagePath?.let { path ->
-                        BitmapFactory.decodeFile(path)
-                    },
-                    normalizedX = entity.normalizedX,
-                    normalizedY = entity.normalizedY,
-                    normalizedWidth = entity.normalizedWidth,
-                    normalizedHeight = entity.normalizedHeight,
-                    blockIndex = entity.blockIndex
-                )
-            }
+
+        val elements = withContext(Dispatchers.IO) {
+            noteWithElements.elements
+                .sortedBy { it.orderIndex }
+                .map { entity ->
+                    StructuredElement(
+                        elementId = entity.id,
+                        kind = ElementKind.valueOf(entity.kind),
+                        text = entity.text,
+                        confidence = entity.confidence,
+                        diagramBitmap = entity.diagramImagePath?.let { path ->
+                            BitmapFactory.decodeFile(path)
+                        },
+                        normalizedX = entity.normalizedX,
+                        normalizedY = entity.normalizedY,
+                        normalizedWidth = entity.normalizedWidth,
+                        normalizedHeight = entity.normalizedHeight,
+                        blockIndex = entity.blockIndex
+                    )
+                }
+        }
 
         val blocks = elements.groupBy { it.blockIndex }
             .toSortedMap()
