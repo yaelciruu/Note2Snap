@@ -9,15 +9,26 @@ import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.core.Rect as CvRect
 import org.opencv.imgproc.Imgproc
+import androidx.core.graphics.createBitmap
 
 class ConnectedComponentLabeler {
 
     companion object {
+        // A merged "text" box bigger than this fraction of the whole image is
+        // more likely a diagram (e.g. a whiteboard sketch) than a real paragraph
+        // of handwriting -- see Part B, Step 2 of the hardening guide.
         private const val MAX_MERGED_TEXT_AREA_RATIO = 0.08
-        // a merged "text" box bigger than 8% of the whole image is probably a diagram, not a paragraph
-        private const val MAX_REGIONS_PER_IMAGE = 300
-        // tune based on real photos; a typical whiteboard has well under 100
 
+        // Upper bound on total regions per photo, checked after merging (not on
+        // raw pre-merge fragments). Tune based on real photos; a typical
+        // whiteboard has well under 100 -- see Part C, Step 3 of the hardening guide.
+        private const val MAX_REGIONS_PER_IMAGE = 300
+
+        // How close two text fragments can be (in pixels) and still get merged
+        // into one line/paragraph. Tuned empirically against real whiteboard
+        // photos during CCL debug-screen testing: 28 (original) under-merged
+        // some lines, 15 over-fragmented words; 22 was the best balance found.
+        private const val HORIZONTAL_GAP_THRESHOLD = 22
     }
 
     suspend fun label(binarizedBitmap: Bitmap): List<Region> =
@@ -50,7 +61,7 @@ class ConnectedComponentLabeler {
                 val type = RegionClassifier.classify(boundingBox, area) ?: continue
 
                 val cropMat = Mat(grayMat, CvRect(x, y, w, h))
-                val cropBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+                val cropBitmap = createBitmap(w, h, Bitmap.Config.ARGB_8888)
                 Utils.matToBitmap(cropMat, cropBitmap)
                 cropMat.release()
 
@@ -75,7 +86,6 @@ class ConnectedComponentLabeler {
 
         val merged = mutableListOf<Rect>()
         val used = BooleanArray(textRegions.size)
-        val horizontalGapThreshold = 22
 
         for (i in textRegions.indices) {
             if (used[i]) continue
@@ -92,8 +102,8 @@ class ConnectedComponentLabeler {
                     val verticallyAligned = candidate.top < currentBox.bottom &&
                             candidate.bottom > currentBox.top
                     val horizontallyClose =
-                        candidate.left - currentBox.right in -horizontalGapThreshold..horizontalGapThreshold ||
-                                currentBox.left - candidate.right in -horizontalGapThreshold..horizontalGapThreshold
+                        candidate.left - currentBox.right in -HORIZONTAL_GAP_THRESHOLD..HORIZONTAL_GAP_THRESHOLD ||
+                                currentBox.left - candidate.right in -HORIZONTAL_GAP_THRESHOLD..HORIZONTAL_GAP_THRESHOLD
 
                     if (verticallyAligned && horizontallyClose) {
                         currentBox = Rect(
@@ -141,7 +151,7 @@ class ConnectedComponentLabeler {
             )
         }
 
-        return (nonText + mergedTextRegions).sortedWith(
+        return allRegions.sortedWith(
             compareBy({ it.boundingBox.top }, { it.boundingBox.left })
         )
     }
