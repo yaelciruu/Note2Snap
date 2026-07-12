@@ -9,6 +9,7 @@ import com.note2snap.structuring.StructuredNote
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.io.File
 
 sealed interface NoteDetailUiState {
     data object Loading : NoteDetailUiState
@@ -19,7 +20,7 @@ sealed interface NoteDetailUiState {
 sealed interface ExportUiState {
     data object Idle : ExportUiState
     data object Exporting : ExportUiState
-    data class Success(val pdfFile: java.io.File) : ExportUiState
+    data class Success(val pdfFile: File) : ExportUiState
     data class Failure(val message: String) : ExportUiState
 }
 
@@ -61,11 +62,12 @@ class NoteDetailViewModel(
 
         viewModelScope.launch {
             _exportState.value = ExportUiState.Exporting
-            try {
-                val pdfFile = pdfExporter.exportToPdf(currentState.structuredNote, title)
+            runCatching {
+                pdfExporter.exportToPdf(currentState.structuredNote, title)
+            }.onSuccess { pdfFile ->
                 _exportState.value = ExportUiState.Success(pdfFile)
-            } catch (e: Exception) {
-                _exportState.value = ExportUiState.Failure(e.message ?: "Export failed")
+            }.onFailure { throwable ->
+                _exportState.value = ExportUiState.Failure(throwable.message ?: "Export failed")
             }
         }
     }
