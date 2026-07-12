@@ -33,6 +33,7 @@ import java.util.Date
 import androidx.compose.material.icons.filled.Camera
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
+import androidx.compose.material.icons.filled.Settings
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -40,7 +41,8 @@ fun NoteListScreen(
     viewModel: NoteListViewModel,
     onNoteClick: (Long) -> Unit,
     onNewCaptureClick: () -> Unit,
-    onDebugClick: () -> Unit
+    onDebugClick: () -> Unit,
+    onSettingsClick: () -> Unit
 ) {
     val notes by viewModel.notes.collectAsState()
 
@@ -53,6 +55,9 @@ fun NoteListScreen(
                         IconButton(onClick = onDebugClick) {
                             Icon(Icons.Filled.BugReport, contentDescription = "CCL threshold debug")
                         }
+                    }
+                    IconButton(onClick = onSettingsClick) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Settings")
                     }
                 }
             )

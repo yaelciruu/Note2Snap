@@ -33,6 +33,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import com.note2snap.settings.SettingsScreen
+import com.note2snap.settings.SettingsViewModel
 
 @Composable
 fun Note2SnapNavHost(noteRepository: NoteRepository) {
@@ -54,6 +56,9 @@ fun Note2SnapNavHost(noteRepository: NoteRepository) {
                 },
                 onDebugClick = {
                     navController.navigate(CclDebugDestination)
+                },
+                onSettingsClick = {
+                    navController.navigate(SettingsDestination)
                 }
             )
         }
@@ -150,6 +155,16 @@ fun Note2SnapNavHost(noteRepository: NoteRepository) {
 
         composable<CclDebugDestination> {
             CclDebugScreen()
+        }
+
+        composable<SettingsDestination> {
+            val viewModel = viewModel<SettingsViewModel> {
+                SettingsViewModel(context.applicationContext)
+            }
+            SettingsScreen(
+                viewModel = viewModel,
+                onBackClick = { navController.popBackStack() }
+            )
         }
     }
 }

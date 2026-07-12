@@ -22,3 +22,6 @@ data class NoteDetailDestination(val noteId: Long)
 
 @Serializable
 data object CclDebugDestination
+
+@Serializable
+data object SettingsDestination
