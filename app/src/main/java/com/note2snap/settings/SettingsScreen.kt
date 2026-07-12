@@ -3,6 +3,9 @@ package com.note2snap.settings
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -10,9 +13,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -22,6 +24,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+
+private const val STORAGE_DECIMAL_FORMAT = "%.1f"
 
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
@@ -37,8 +41,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBackClick: () -> Unit) {
                 title = { Text("Settings") },
                 navigationIcon = {
                     IconButton(onClick = onBackClick) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
-                    }
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")                    }
                 }
             )
         }
@@ -57,7 +60,7 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBackClick: () -> Unit) {
 
             Text("Storage", style = MaterialTheme.typography.titleMedium, modifier = Modifier.padding(top = 16.dp))
             Text(
-                "Used: ${"%.1f".format(storageUsedMb)} MB",
+                "Used: ${STORAGE_DECIMAL_FORMAT.format(storageUsedMb)} MB",
                 style = MaterialTheme.typography.bodyMedium,
                 modifier = Modifier.padding(top = 4.dp, bottom = 8.dp)
             )
@@ -68,18 +71,18 @@ fun SettingsScreen(viewModel: SettingsViewModel, onBackClick: () -> Unit) {
     }
 
     if (showConfirmClear) {
-        androidx.compose.material3.AlertDialog(
+        AlertDialog(
             onDismissRequest = { showConfirmClear = false },
             title = { Text("Delete everything?") },
             text = { Text("This permanently deletes all notes, photos, and exports. This cannot be undone.") },
             confirmButton = {
-                androidx.compose.material3.TextButton(onClick = {
+                TextButton(onClick = {
                     viewModel.clearAllData()
                     showConfirmClear = false
                 }) { Text("Delete") }
             },
             dismissButton = {
-                androidx.compose.material3.TextButton(onClick = { showConfirmClear = false }) { Text("Cancel") }
+                TextButton(onClick = { showConfirmClear = false }) { Text("Cancel") }
             }
         )
     }
