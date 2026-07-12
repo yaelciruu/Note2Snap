@@ -6,7 +6,9 @@ import com.note2snap.recognition.RecognizedLine
 
 class NoteStructuringEngine {
 
-    private val blockGapRatio = 0.035f
+    private companion object {
+        const val BLOCK_GAP_RATIO = 0.035f
+    }
 
     fun structure(
         recognizedLines: List<RecognizedLine>,
@@ -59,7 +61,6 @@ class NoteStructuringEngine {
             sourceImageWidth = sourceImageWidth,
             sourceImageHeight = sourceImageHeight
         )
-
     }
 
     private fun segmentIntoBlocks(readingOrder: List<StructuredElement>): List<NoteBlock> {
@@ -70,7 +71,7 @@ class NoteStructuringEngine {
 
         for (element in readingOrder) {
             val gap = element.normalizedY - previousBottom
-            if (gap > blockGapRatio && blocks.last().isNotEmpty()) {
+            if (gap > BLOCK_GAP_RATIO && blocks.last().isNotEmpty()) {
                 blocks.add(mutableListOf())
             }
             blocks.last().add(element)
@@ -84,5 +85,4 @@ class NoteStructuringEngine {
             )
         }
     }
-
 }
