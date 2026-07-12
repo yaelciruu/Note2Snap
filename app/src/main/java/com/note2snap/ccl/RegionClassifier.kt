@@ -1,7 +1,6 @@
 package com.note2snap.ccl
 
 import android.graphics.Rect
-
 object RegionClassifier {
     private const val MIN_GLYPH_PIXELS = 12
     private const val MAX_TEXT_EXTENT = 0.55
