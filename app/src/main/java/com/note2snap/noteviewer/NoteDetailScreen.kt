@@ -1,5 +1,6 @@
 package com.note2snap.noteviewer
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 
+private const val PDF_MIME_TYPE = "application/pdf"
+private const val SHARE_CHOOSER_TITLE = "Share PDF"
+
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
 fun NoteDetailScreen(
@@ -37,17 +41,18 @@ fun NoteDetailScreen(
 
     LaunchedEffect(noteId) { viewModel.loadNote(noteId) }
 
+    // Once a PDF export succeeds, immediately hand it off to the system share
+    // sheet, then reset export state back to Idle so this doesn't refire.
     LaunchedEffect(exportState) {
         val state = exportState
         if (state is ExportUiState.Success) {
-            val uri = com.note2snap.export.PdfExporter(context.applicationContext)
-                .getShareableUri(state.pdfFile)
-            val shareIntent = android.content.Intent(android.content.Intent.ACTION_SEND).apply {
-                type = "application/pdf"
-                putExtra(android.content.Intent.EXTRA_STREAM, uri)
-                addFlags(android.content.Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            val uri = viewModel.getShareableUri(state.pdfFile)
+            val shareIntent = Intent(Intent.ACTION_SEND).apply {
+                type = PDF_MIME_TYPE
+                putExtra(Intent.EXTRA_STREAM, uri)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
-            context.startActivity(android.content.Intent.createChooser(shareIntent, "Share PDF"))
+            context.startActivity(Intent.createChooser(shareIntent, SHARE_CHOOSER_TITLE))
             viewModel.resetExportState()
         }
     }
@@ -96,9 +101,10 @@ fun NoteDetailScreen(
                         .verticalScroll(rememberScrollState())
                         .padding(16.dp)
                 ) {
-                    if (exportState is ExportUiState.Failure) {
+                    val currentExportState = exportState
+                    if (currentExportState is ExportUiState.Failure) {
                         Text(
-                            "Export failed: ${(exportState as ExportUiState.Failure).message}",
+                            "Export failed: ${currentExportState.message}",
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                     }
