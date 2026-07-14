@@ -72,7 +72,7 @@ class NoteDetailViewModel(
         }
     }
 
-    fun getShareableUri(pdfFile: java.io.File) = pdfExporter.getShareableUri(pdfFile)
+    fun getShareableUri(pdfFile: File) = pdfExporter.getShareableUri(pdfFile)
 
     fun resetExportState() {
         _exportState.value = ExportUiState.Idle

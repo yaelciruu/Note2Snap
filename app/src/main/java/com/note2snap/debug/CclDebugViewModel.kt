@@ -16,7 +16,8 @@ data class CclDebugState(
     val binarizedBitmap: Bitmap? = null,
     val regions: List<Region> = emptyList(),
     val sourceWidth: Int = 0,
-    val sourceHeight: Int = 0
+    val sourceHeight: Int = 0,
+    val errorMessage: String? = null
 )
 
 class CclDebugViewModel : ViewModel() {
@@ -29,15 +30,24 @@ class CclDebugViewModel : ViewModel() {
     fun runPipelineOn(imageFilePath: String) {
         _state.value = CclDebugState(isLoading = true)
         viewModelScope.launch {
-            val preprocessed = preprocessor.process(File(imageFilePath))
-            val regions = labeler.label(preprocessed.binarizedBitmap)
-            _state.value = CclDebugState(
-                isLoading = false,
-                binarizedBitmap = preprocessed.binarizedBitmap,
-                regions = regions,
-                sourceWidth = preprocessed.originalWidth,
-                sourceHeight = preprocessed.originalHeight
-            )
+            runCatching {
+                val preprocessed = preprocessor.process(File(imageFilePath))
+                val regions = labeler.label(preprocessed.binarizedBitmap)
+                CclDebugState(
+                    isLoading = false,
+                    binarizedBitmap = preprocessed.binarizedBitmap,
+                    regions = regions,
+                    sourceWidth = preprocessed.originalWidth,
+                    sourceHeight = preprocessed.originalHeight
+                )
+            }.onSuccess { newState ->
+                _state.value = newState
+            }.onFailure { throwable ->
+                _state.value = CclDebugState(
+                    isLoading = false,
+                    errorMessage = throwable.message ?: "Failed to process image"
+                )
+            }
         }
     }
 }

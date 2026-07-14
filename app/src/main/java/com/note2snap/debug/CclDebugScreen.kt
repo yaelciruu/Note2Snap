@@ -30,11 +30,8 @@ import com.note2snap.ccl.RegionType
 import com.note2snap.core.util.ImageStorage
 import kotlinx.coroutines.launch
 
-/**
- * Developer-only debug screen. Not part of the normal user flow — wire a
- * temporary entry point to it (e.g. a debug-build-only button) while tuning
- * thresholds, then remove or gate it behind BuildConfig.DEBUG before release.
- */
+private const val REGION_STROKE_WIDTH = 3f
+
 @Composable
 fun CclDebugScreen(viewModel: CclDebugViewModel = viewModel()) {
     val context = LocalContext.current
@@ -72,7 +69,11 @@ fun CclDebugScreen(viewModel: CclDebugViewModel = viewModel()) {
                 CircularProgressIndicator(modifier = Modifier.padding(24.dp))
             }
 
-            state.binarizedBitmap?.let { bitmap ->
+            state.errorMessage?.let { message ->
+                Text("Error: $message", modifier = Modifier.padding(vertical = 8.dp))
+            }
+
+            state.binarizedBitmap?.let {
                 BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
                     val canvasWidthPx = constraints.maxWidth.toFloat()
                     val scale = canvasWidthPx / state.sourceWidth.toFloat()
@@ -94,7 +95,7 @@ fun CclDebugScreen(viewModel: CclDebugViewModel = viewModel()) {
                                     region.boundingBox.width() * scale,
                                     region.boundingBox.height() * scale
                                 ),
-                                style = Stroke(width = 3f)
+                                style = Stroke(width = REGION_STROKE_WIDTH)
                             )
                         }
                     }
